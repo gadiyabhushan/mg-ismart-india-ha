@@ -1,0 +1,29 @@
+{
+  "title": "MG iSmart India",
+  "config": {
+    "step": {
+      "user": {
+        "title": "MG iSmart India",
+        "description": "Enter your MG iSmart India phone number and password.",
+        "data": {
+          "phone": "Phone number",
+          "password": "Password"
+        }
+      },
+      "vehicle": {
+        "title": "Select Vehicle",
+        "data": {
+          "vin": "Vehicle"
+        }
+      }
+    },
+    "error": {
+      "auth": "Authentication failed.",
+      "cannot_connect": "Could not connect to MG iSmart India.",
+      "no_vehicles": "No vehicles were returned for this account."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured."
+    }
+  }
+}
