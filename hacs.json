@@ -1,6 +1,6 @@
 {
   "name": "MG iSmart India",
   "render_readme": true,
-  "domains": ["sensor", "binary_sensor"],
+  "domains": ["sensor", "binary_sensor", "climate", "lock", "cover", "button", "select"],
   "homeassistant": "2024.8.0"
 }
