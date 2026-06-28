@@ -180,6 +180,18 @@ async def async_setup_entry(
                 native_unit_of_measurement=UnitOfPressure.BAR,
                 state_class=SensorStateClass.MEASUREMENT,
             ),
+            MgIndiaSensor(
+                coordinator,
+                "latitude",
+                "Latitude",
+                lambda data: status_value(data, "latitude"),
+            ),
+            MgIndiaSensor(
+                coordinator,
+                "longitude",
+                "Longitude",
+                lambda data: status_value(data, "longitude"),
+            ),
         ]
     )
 
