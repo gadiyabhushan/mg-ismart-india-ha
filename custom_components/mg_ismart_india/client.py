@@ -89,6 +89,15 @@ class MgIndiaVehicleStatus:
     climate_running: bool | None
     sunroof_open: bool | None
     can_bus_active: bool | None
+    latitude: float | None = None
+    longitude: float | None = None
+    altitude: int | None = None
+    heading: int | None = None
+    speed_kmh: float | None = None
+    front_left_tyre_pressure_bar: float | None = None
+    front_right_tyre_pressure_bar: float | None = None
+    rear_left_tyre_pressure_bar: float | None = None
+    rear_right_tyre_pressure_bar: float | None = None
 
 
 @dataclass(frozen=True)
@@ -643,6 +652,24 @@ def parse_vehicle_status(raw: dict[str, Any]) -> MgIndiaVehicleStatus:
     """Normalize protocol-513 status values into Home Assistant units."""
 
     basic = raw.get("basicVehicleStatus", {})
+    gps = raw.get("gpsPosition", {}) if isinstance(raw.get("gpsPosition"), dict) else {}
+    waypoint = gps.get("wayPoint", {}) if isinstance(gps.get("wayPoint"), dict) else {}
+    pos = waypoint.get("position", {}) if isinstance(waypoint.get("position"), dict) else {}
+
+    lat_raw = pos.get("latitude")
+    lon_raw = pos.get("longitude")
+    latitude = round(lat_raw / 1000000.0, 6) if isinstance(lat_raw, int) and lat_raw != 0 else None
+    longitude = round(lon_raw / 1000000.0, 6) if isinstance(lon_raw, int) and lon_raw != 0 else None
+    altitude = pos.get("altitude") if isinstance(pos.get("altitude"), int) else None
+    heading = waypoint.get("heading") if isinstance(waypoint.get("heading"), int) else None
+    speed_raw = waypoint.get("speed")
+    speed_kmh = round(speed_raw / 10.0, 1) if isinstance(speed_raw, int) and speed_raw >= 0 else None
+
+    def tyre_pressure(val: Any) -> float | None:
+        if isinstance(val, int) and not isinstance(val, bool) and val > 0:
+            return round(val * 0.02, 2)
+        return None
+
     return MgIndiaVehicleStatus(
         status_time=positive_int(raw.get("statusTime")),
         last_vehicle_activity=positive_int(basic.get("timeOfLastCANBUSActivity")),
@@ -668,6 +695,15 @@ def parse_vehicle_status(raw: dict[str, Any]) -> MgIndiaVehicleStatus:
         else None,
         sunroof_open=optional_bool(basic.get("sunroofStatus")),
         can_bus_active=optional_bool(basic.get("canBusActive")),
+        latitude=latitude,
+        longitude=longitude,
+        altitude=altitude,
+        heading=heading,
+        speed_kmh=speed_kmh,
+        front_left_tyre_pressure_bar=tyre_pressure(basic.get("frontLeftTyrePressure")),
+        front_right_tyre_pressure_bar=tyre_pressure(basic.get("frontRrightTyrePressure")),
+        rear_left_tyre_pressure_bar=tyre_pressure(basic.get("rearLeftTyrePressure")),
+        rear_right_tyre_pressure_bar=tyre_pressure(basic.get("rearRightTyrePressure")),
     )
 
 

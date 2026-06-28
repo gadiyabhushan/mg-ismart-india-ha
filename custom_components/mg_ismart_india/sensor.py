@@ -15,6 +15,7 @@ from homeassistant.const import (
     PERCENTAGE,
     UnitOfElectricPotential,
     UnitOfLength,
+    UnitOfPressure,
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
@@ -142,6 +143,42 @@ async def async_setup_entry(
                 "Last Vehicle Activity",
                 lambda data: status_datetime(data, "last_vehicle_activity"),
                 device_class=SensorDeviceClass.TIMESTAMP,
+            ),
+            MgIndiaSensor(
+                coordinator,
+                "tyre_pressure_front_left",
+                "Tyre Pressure Front Left",
+                lambda data: status_value(data, "front_left_tyre_pressure_bar"),
+                device_class=SensorDeviceClass.PRESSURE,
+                native_unit_of_measurement=UnitOfPressure.BAR,
+                state_class=SensorStateClass.MEASUREMENT,
+            ),
+            MgIndiaSensor(
+                coordinator,
+                "tyre_pressure_front_right",
+                "Tyre Pressure Front Right",
+                lambda data: status_value(data, "front_right_tyre_pressure_bar"),
+                device_class=SensorDeviceClass.PRESSURE,
+                native_unit_of_measurement=UnitOfPressure.BAR,
+                state_class=SensorStateClass.MEASUREMENT,
+            ),
+            MgIndiaSensor(
+                coordinator,
+                "tyre_pressure_rear_left",
+                "Tyre Pressure Rear Left",
+                lambda data: status_value(data, "rear_left_tyre_pressure_bar"),
+                device_class=SensorDeviceClass.PRESSURE,
+                native_unit_of_measurement=UnitOfPressure.BAR,
+                state_class=SensorStateClass.MEASUREMENT,
+            ),
+            MgIndiaSensor(
+                coordinator,
+                "tyre_pressure_rear_right",
+                "Tyre Pressure Rear Right",
+                lambda data: status_value(data, "rear_right_tyre_pressure_bar"),
+                device_class=SensorDeviceClass.PRESSURE,
+                native_unit_of_measurement=UnitOfPressure.BAR,
+                state_class=SensorStateClass.MEASUREMENT,
             ),
         ]
     )
