@@ -146,7 +146,7 @@ async def async_setup_entry(
             ),
             MgIndiaSensor(
                 coordinator,
-                "tyre_pressure_front_left",
+                "tirepressurefrontleft",
                 "Tyre Pressure Front Left",
                 lambda data: status_value(data, "front_left_tyre_pressure_bar"),
                 device_class=SensorDeviceClass.PRESSURE,
@@ -155,7 +155,7 @@ async def async_setup_entry(
             ),
             MgIndiaSensor(
                 coordinator,
-                "tyre_pressure_front_right",
+                "tirepressurefrontright",
                 "Tyre Pressure Front Right",
                 lambda data: status_value(data, "front_right_tyre_pressure_bar"),
                 device_class=SensorDeviceClass.PRESSURE,
@@ -164,7 +164,7 @@ async def async_setup_entry(
             ),
             MgIndiaSensor(
                 coordinator,
-                "tyre_pressure_rear_left",
+                "tirepressurerearleft",
                 "Tyre Pressure Rear Left",
                 lambda data: status_value(data, "rear_left_tyre_pressure_bar"),
                 device_class=SensorDeviceClass.PRESSURE,
@@ -173,7 +173,7 @@ async def async_setup_entry(
             ),
             MgIndiaSensor(
                 coordinator,
-                "tyre_pressure_rear_right",
+                "tirepressurerearright",
                 "Tyre Pressure Rear Right",
                 lambda data: status_value(data, "rear_right_tyre_pressure_bar"),
                 device_class=SensorDeviceClass.PRESSURE,
