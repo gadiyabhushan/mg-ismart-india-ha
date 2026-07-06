@@ -1,58 +1,81 @@
-# MG iSmart India
+# 🚗 MG iSmart India for Home Assistant
 
-Home Assistant custom integration for MG iSmart India connected vehicles.
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![Home Assistant](https://img.shields.io/badge/Home_Assistant-2024.x-blue.svg?style=for-the-badge&logo=home-assistant)](https://www.home-assistant.io/)
+[![Maintainer](https://img.shields.io/badge/Maintainer-gadiyabhushan-blueviolet.svg?style=for-the-badge)](https://github.com/gadiyabhushan)
 
-It authenticates against the India MG iSmart cloud, lists vehicles, decodes the
-India-specific TAP protocol 513 vehicle status response, and exposes remote
-controls supported by each vehicle's model configuration.
+A premium, custom Home Assistant integration for **MG iSmart India** connected vehicles (such as the **MG Windsor EV**, ZS EV, Comet EV, and Hector). 
 
-## Current Entities
+This integration connects directly to the Indian MG iSmart cloud servers, decodes the India-specific TAP protocol telemetry, and exposes rich sensors and remote controls.
 
-- Model
-- Series
-- Model year
-- Platform
-- Supported feature count
-- Last update
-- Vehicle status time
-- Last vehicle activity
-- Activation status
-- AC support
-- Battery level
-- Remaining range
-- Odometer
-- Auxiliary battery voltage
-- Interior and exterior temperature
-- Lock state
-- Door, boot, bonnet, and window state
-- Remote climate and CAN bus activity
-- Climate on/off
-- Door lock/unlock
-- Supported windows
-- Sunroof when fitted
-- Find-my-car horn and lights
-- Tailgate release when supported
-- Front heated-seat levels when fitted
+---
 
-## Installation
+## ✨ Features
 
-Copy `custom_components/mg_ismart_india` into your Home Assistant
-`custom_components` directory, restart Home Assistant, then add the integration
-from **Settings > Devices & services**.
+* **⚡ EV Charging & Plug Status:** Real-time charging state (`charging`) and cable connection status (`plugged_in`).
+* **🏎️ Dynamic GPS Tracking:** Exposes a `device_tracker` entity with real-time latitude & longitude. Updates dynamically every **1 minute** while driving, and returns to **15 minutes** when parked to conserve battery.
+* **🛞 4-Wheel Tyre Pressure Monitoring (TPMS):** Decodes raw TAP telemetry into actual pressure values (in bar) for all 4 tyres. Fully compatible with auto-discovery cards.
+* **🔄 Force Update Button:** Wakes up the vehicle on-demand to fetch the absolute latest telemetry.
+* **❄️ Remote Climate Control:** Turn AC on/off and monitor cabin temperature.
+* **🔒 Lock & Window Controls:** Open/Close windows, lock/unlock doors, and monitor sunroof status.
+* **🔊 Find My Car:** Trigger the horn & lights to locate your vehicle.
 
-## Notes
+---
 
-- Use the 10-digit India mobile number associated with the MG iSmart account.
-- Remote controls require the vehicle-control PIN. New installations verify it
-  during setup. Existing installations can add or replace it using the
-  integration's **Configure** action. Only a one-way hash is stored.
-- Control entities are created dynamically from the vehicle's reported model
-  configuration; unsupported hardware is not exposed.
-- Vehicle location is intentionally not exposed.
-- Tyre pressure and charging details remain unavailable until their separate
-  India encodings are validated.
-- This project is independent from the generic MG SAIC integration because the
-  India cloud uses a different TAP login and gateway signing flow.
+## 🛠️ Installation
 
-See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for ASN.1 schema
-attribution.
+### Option 1: Via HACS (Recommended)
+1. Open **HACS** in Home Assistant.
+2. Click the three dots in the top-right corner and select **Custom repositories**.
+3. Add `https://github.com/gadiyabhushan/mg-ismart-india-ha` with category **Integration**.
+4. Click **Install**.
+5. Restart Home Assistant.
+
+### Option 2: Manual Installation
+1. Copy the `custom_components/mg_ismart_india` directory into your Home Assistant's `custom_components/` directory.
+2. Restart Home Assistant.
+
+---
+
+## ⚙️ Configuration
+
+1. In Home Assistant, go to **Settings > Devices & Services**.
+2. Click **+ Add Integration** and search for **MG iSmart India**.
+3. Enter your details:
+   * **Phone Number:** Your 10-digit Indian mobile number registered with MG iSmart.
+   * **Password:** Your iSmart account password.
+   * **Security PIN:** Your 4-digit or 6-digit vehicle control PIN (used to authorize remote operations like locking/AC).
+
+---
+
+## 📺 Lovelace Dashboard Card Integration
+
+This integration is optimized to work beautifully with the popular custom [vehicle-info-card](https://github.com/ngocjohn/vehicle-info-card).
+
+```yaml
+type: custom:vehicle-info-card
+entity: device_tracker.windsor_ev_essence_pro_location
+name: MG Windsor EV Essence Pro
+
+# 🎨 Options
+show_header_info: true
+show_buttons: true
+show_map: true
+enable_map_popup: true
+enable_services_control: true
+
+# 🔋 Primary EV Metrics
+soc: sensor.windsor_ev_essence_pro_battery_level
+range: sensor.windsor_ev_essence_pro_remaining_range
+odometer: sensor.windsor_ev_essence_pro_odometer
+lock: lock.windsor_ev_essence_pro_door_lock
+```
+
+---
+
+## 🔒 Security & Privacy
+
+* This integration stores only a **one-way hash** of your vehicle security PIN on your local Home Assistant instance.
+* All communications use secure SSL endpoints connecting directly to the official MG India server (`iov-tap.mgindia.co.in`). No middleman servers are used.
+
+*This project is independent from the generic MG SAIC EU/Rest-of-World integration because India uses an isolated TAP signing scheme.*
