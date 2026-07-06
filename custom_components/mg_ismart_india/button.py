@@ -21,7 +21,7 @@ async def async_setup_entry(
     capabilities = discover_capabilities(
         coordinator.data.vehicle.raw, coordinator.data.features
     )
-    entities = []
+    entities = [MgIndiaForceUpdateButton(coordinator)]
     if capabilities.find_my_car:
         entities.extend(
             [
@@ -83,4 +83,19 @@ class MgIndiaButton(MgIndiaEntity, ButtonEntity):
             await self._client.find_my_car(stop=True)
         else:
             await self._client.release_tailgate()
+        await self.coordinator.async_request_refresh()
+
+
+class MgIndiaForceUpdateButton(MgIndiaEntity, ButtonEntity):
+    """Force update button for vehicle status."""
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "force_update", "Force Update")
+        self._attr_icon = "mdi:refresh"
+
+    @property
+    def available(self) -> bool:
+        return True
+
+    async def async_press(self) -> None:
         await self.coordinator.async_request_refresh()

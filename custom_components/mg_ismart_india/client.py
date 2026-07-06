@@ -89,6 +89,8 @@ class MgIndiaVehicleStatus:
     climate_running: bool | None
     sunroof_open: bool | None
     can_bus_active: bool | None
+    charging: bool | None = None
+    plugged_in: bool | None = None
     latitude: float | None = None
     longitude: float | None = None
     altitude: int | None = None
@@ -695,6 +697,8 @@ def parse_vehicle_status(raw: dict[str, Any]) -> MgIndiaVehicleStatus:
         else None,
         sunroof_open=optional_bool(basic.get("sunroofStatus")),
         can_bus_active=optional_bool(basic.get("canBusActive")),
+        charging=(basic.get("engineStatus") == 3) if basic.get("engineStatus") is not None else None,
+        plugged_in=(basic.get("engineStatus") in (3, 4)) if basic.get("engineStatus") is not None else None,
         latitude=latitude,
         longitude=longitude,
         altitude=altitude,

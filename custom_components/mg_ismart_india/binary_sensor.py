@@ -130,6 +130,20 @@ async def async_setup_entry(
                 "CAN Bus Active",
                 lambda data: status_value(data, "can_bus_active"),
             ),
+            MgIndiaBinarySensor(
+                coordinator,
+                "charging",
+                "Charging",
+                lambda data: status_value(data, "charging"),
+                device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
+            ),
+            MgIndiaBinarySensor(
+                coordinator,
+                "plugged_in",
+                "Plugged In",
+                lambda data: status_value(data, "plugged_in"),
+                device_class=BinarySensorDeviceClass.PLUG,
+            ),
         ]
     )
 

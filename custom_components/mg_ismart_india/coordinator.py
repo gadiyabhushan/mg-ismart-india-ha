@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -22,4 +23,11 @@ class MgIndiaDataUpdateCoordinator(DataUpdateCoordinator[MgIndiaSnapshot]):
         self.client = client
 
     async def _async_update_data(self) -> MgIndiaSnapshot:
-        return await self.client.snapshot()
+        snapshot = await self.client.snapshot()
+        if snapshot.status is not None and snapshot.status.can_bus_active:
+            self.update_interval = timedelta(minutes=1)
+            LOGGER.debug("MG Windsor EV is active. Setting update interval to 1 minute.")
+        else:
+            self.update_interval = UPDATE_INTERVAL
+            LOGGER.debug("MG Windsor EV is parked. Setting update interval to 15 minutes.")
+        return snapshot
