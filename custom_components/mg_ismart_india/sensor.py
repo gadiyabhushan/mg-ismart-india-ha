@@ -21,6 +21,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from .client import MgIndiaSnapshot
 from .const import DOMAIN
@@ -36,8 +37,21 @@ async def async_setup_entry(
     coordinator: MgIndiaDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
         "coordinator"
     ]
+    odometer_sensor = MgIndiaOdometerAtLastChargeSensor(coordinator)
+    battery_sensor = MgIndiaBatteryAtLastChargeSensor(coordinator)
+    distance_sensor = MgIndiaDistanceSinceLastChargeSensor(coordinator, odometer_sensor)
+    battery_used_sensor = MgIndiaBatteryUsedSinceLastChargeSensor(coordinator, battery_sensor)
+    km_per_pct_sensor = MgIndiaKmPerOnePercentSensor(coordinator, distance_sensor, battery_used_sensor)
+    real_range_sensor = MgIndiaRealWorldEstimatedRangeSensor(coordinator, km_per_pct_sensor)
+
     async_add_entities(
         [
+            odometer_sensor,
+            battery_sensor,
+            distance_sensor,
+            battery_used_sensor,
+            km_per_pct_sensor,
+            real_range_sensor,
             MgIndiaSensor(
                 coordinator, "model", "Model", lambda data: data.vehicle.model_name
             ),
@@ -237,3 +251,133 @@ def status_value(data: MgIndiaSnapshot, attribute: str) -> Any:
 def status_datetime(data: MgIndiaSnapshot, attribute: str) -> datetime | None:
     timestamp = status_value(data, attribute)
     return datetime.fromtimestamp(timestamp).astimezone() if timestamp else None
+
+
+class MgIndiaOdometerAtLastChargeSensor(MgIndiaEntity, RestoreEntity, SensorEntity):
+    """Sensor to track odometer at the last charge session."""
+
+    def __init__(self, coordinator: MgIndiaDataUpdateCoordinator) -> None:
+        super().__init__(coordinator, "odometer_at_last_charge", "Odometer at Last Charge")
+        self._attr_native_unit_of_measurement = "km"
+        self._state = None
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        if (state := await self.async_get_last_state()) is not None:
+            try:
+                self._state = float(state.state)
+            except ValueError:
+                self._state = None
+
+    @property
+    def native_value(self) -> float | None:
+        status = self.coordinator.data.status
+        if status is not None:
+            if status.charging:
+                self._state = status.odometer_km
+        return self._state
+
+
+class MgIndiaBatteryAtLastChargeSensor(MgIndiaEntity, RestoreEntity, SensorEntity):
+    """Sensor to track battery level at the last charge session."""
+
+    def __init__(self, coordinator: MgIndiaDataUpdateCoordinator) -> None:
+        super().__init__(coordinator, "battery_at_last_charge", "Battery at Last Charge")
+        self._attr_native_unit_of_measurement = "%"
+        self._state = None
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        if (state := await self.async_get_last_state()) is not None:
+            try:
+                self._state = float(state.state)
+            except ValueError:
+                self._state = None
+
+    @property
+    def native_value(self) -> float | None:
+        status = self.coordinator.data.status
+        if status is not None:
+            if status.charging:
+                self._state = status.battery_percent
+        return self._state
+
+
+class MgIndiaDistanceSinceLastChargeSensor(MgIndiaEntity, SensorEntity):
+    """Sensor for distance since last charge."""
+
+    def __init__(self, coordinator: MgIndiaDataUpdateCoordinator, odometer_sensor: MgIndiaOdometerAtLastChargeSensor) -> None:
+        super().__init__(coordinator, "distance_since_last_charge", "Distance Since Last Charge")
+        self._attr_native_unit_of_measurement = "km"
+        self._odometer_sensor = odometer_sensor
+
+    @property
+    def native_value(self) -> float | None:
+        status = self.coordinator.data.status
+        start = self._odometer_sensor.native_value
+        if status is not None and status.odometer_km is not None and start is not None:
+            return round(status.odometer_km - start, 2)
+        return None
+
+
+class MgIndiaBatteryUsedSinceLastChargeSensor(MgIndiaEntity, SensorEntity):
+    """Sensor for battery used since last charge."""
+
+    def __init__(self, coordinator: MgIndiaDataUpdateCoordinator, battery_sensor: MgIndiaBatteryAtLastChargeSensor) -> None:
+        super().__init__(coordinator, "battery_used_since_last_charge", "Battery Used Since Last Charge")
+        self._attr_native_unit_of_measurement = "%"
+        self._battery_sensor = battery_sensor
+
+    @property
+    def native_value(self) -> float | None:
+        status = self.coordinator.data.status
+        start = self._battery_sensor.native_value
+        if status is not None and status.battery_percent is not None and start is not None:
+            return round(start - status.battery_percent, 1)
+        return None
+
+
+class MgIndiaKmPerOnePercentSensor(MgIndiaEntity, SensorEntity):
+    """Sensor for efficiency in km per 1% battery."""
+
+    def __init__(
+        self,
+        coordinator: MgIndiaDataUpdateCoordinator,
+        distance_sensor: MgIndiaDistanceSinceLastChargeSensor,
+        battery_used_sensor: MgIndiaBatteryUsedSinceLastChargeSensor,
+    ) -> None:
+        super().__init__(coordinator, "km_per_1_percent", "KM per 1%")
+        self._attr_native_unit_of_measurement = "km/%"
+        self._distance_sensor = distance_sensor
+        self._battery_used_sensor = battery_used_sensor
+
+    @property
+    def native_value(self) -> float | None:
+        dist = self._distance_sensor.native_value
+        used = self._battery_used_sensor.native_value
+        if dist is not None and used is not None and used > 0:
+            return round(dist / used, 2)
+        return None
+
+
+class MgIndiaRealWorldEstimatedRangeSensor(MgIndiaEntity, SensorEntity):
+    """Sensor for real world estimated range based on dynamic efficiency."""
+
+    def __init__(
+        self,
+        coordinator: MgIndiaDataUpdateCoordinator,
+        km_per_pct_sensor: MgIndiaKmPerOnePercentSensor,
+    ) -> None:
+        super().__init__(coordinator, "real_world_range", "Real World Estimated Range")
+        self._attr_native_unit_of_measurement = "km"
+        self._km_per_pct_sensor = km_per_pct_sensor
+
+    @property
+    def native_value(self) -> float | None:
+        status = self.coordinator.data.status
+        rate = self._km_per_pct_sensor.native_value
+        if status is not None and status.battery_percent is not None:
+            if rate is not None and rate > 0 and (status.odometer_km is not None):
+                return round(rate * status.battery_percent, 0)
+            return status.range_km
+        return None
