@@ -121,7 +121,6 @@ class MgIndiaSnapshot:
     service_subscription: dict[str, Any] | None = None
     co2_info: dict[str, Any] | None = None
     co2_supplement: dict[str, Any] | None = None
-    charge_mgmt_data: dict[str, Any] | None = None
     status: MgIndiaVehicleStatus | None = None
     last_update: float = 0
 
@@ -215,11 +214,6 @@ class MgIndiaClient:
         co2_supplement = await self._gateway_get_optional(
             "/navi/vehicle/co2info/supplementInfo", {"vin": vehicle.vin}
         )
-        charge_mgmt_data = await self._gateway_get_optional(
-            "/vehicle/charging/mgmtData", {"vin": vehicle.vin}
-        )
-        LOGGER.warning("MG India API charge_mgmt_data response: %s", charge_mgmt_data)
-        
         try:
             status = await self.vehicle_status(vehicle.vin)
             self._last_vehicle_status = status
@@ -235,7 +229,6 @@ class MgIndiaClient:
             service_subscription=service_subscription,
             co2_info=co2_info,
             co2_supplement=co2_supplement,
-            charge_mgmt_data=charge_mgmt_data,
             status=status,
             last_update=time.time(),
         )
