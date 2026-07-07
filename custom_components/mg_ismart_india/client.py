@@ -500,7 +500,7 @@ class MgIndiaClient:
     ) -> dict[str, Any] | None:
         try:
             return await self.gateway_get(path, params)
-        except MgIndiaApiError:
+        except (MgIndiaApiError, httpx.HTTPError):
             return None
 
     async def _gateway_get_raw(
