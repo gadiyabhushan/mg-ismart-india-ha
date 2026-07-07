@@ -211,43 +211,49 @@ def decode_control_response(raw: str) -> tuple[dict[str, Any], dict[str, Any] | 
     if len(payload) < 4:
         raise TapCodecError("TAP control response is too short")
 
-    version = payload[0]
     dispatcher = None
     app = None
 
-    if version == V11_PROTOCOL_VERSION:
-        dispatcher_length = payload[2]
-        if dispatcher_length < 4 or dispatcher_length > len(payload):
-            raise TapCodecError(f"Invalid TAP v1.1 control dispatcher length: {dispatcher_length}")
-        try:
-            dispatcher = _codec_v11().decode("MPDispatcherBodyV11", payload[4:dispatcher_length])
-        except Exception as err:
-            raise TapCodecError(f"Unable to decode TAP v1.1 dispatcher: {err}") from err
-
-        app_length = dispatcher.get("applicationDataLength", 0)
-        if app_length > 0:
-            app = payload[dispatcher_length : dispatcher_length + app_length]
-    else:
-        dispatcher_length = payload[1]
-        # Try offset 19 (expecting 16 reserved bytes)
-        dispatcher_end = TAP_RESERVED_SIZE + dispatcher_length
-        try:
-            if dispatcher_length < 3 or dispatcher_end > len(payload):
-                raise ValueError("Length mismatch")
-            dispatcher = _codec().decode("MPDispatcherBody", payload[19:dispatcher_end])
-            app_length = dispatcher.get("applicationDataLength", 0)
-            app = payload[dispatcher_end : dispatcher_end + app_length]
-        except Exception:
-            # Fallback to offset 3 (no reserved bytes)
-            dispatcher_end = 3 + dispatcher_length
-            if dispatcher_length < 3 or dispatcher_end > len(payload):
-                raise TapCodecError(f"Invalid TAP v2.1 dispatcher length: {dispatcher_length}")
+    # Try decoding as v2.1 dispatcher (MPDispatcherBody) at different offsets
+    for start in [19, 3]:
+        # Try different end bounds based on length indicators
+        for end in [start + payload[1], start + payload[1] + 3, len(payload)]:
+            if end > len(payload) or end <= start:
+                continue
             try:
-                dispatcher = _codec().decode("MPDispatcherBody", payload[3:dispatcher_end])
+                dispatcher = _codec().decode("MPDispatcherBody", payload[start:end])
                 app_length = dispatcher.get("applicationDataLength", 0)
-                app = payload[dispatcher_end : dispatcher_end + app_length]
-            except Exception as err:
-                raise TapCodecError(f"Unable to decode TAP v2.1 dispatcher: {err}") from err
+                if app_length > 0:
+                    app = payload[end : end + app_length]
+                else:
+                    app = None
+                break
+            except Exception:
+                continue
+        if dispatcher is not None:
+            break
+
+    # If v2.1 fails, try decoding as v1.1 dispatcher (MPDispatcherBodyV11)
+    if dispatcher is None:
+        for start in [4, 19, 3]:
+            for end in [start + payload[2], start + payload[1], len(payload)]:
+                if end > len(payload) or end <= start:
+                    continue
+                try:
+                    dispatcher = _codec_v11().decode("MPDispatcherBodyV11", payload[start:end])
+                    app_length = dispatcher.get("applicationDataLength", 0)
+                    if app_length > 0:
+                        app = payload[end : end + app_length]
+                    else:
+                        app = None
+                    break
+                except Exception:
+                    continue
+            if dispatcher is not None:
+                break
+
+    if dispatcher is None:
+        raise TapCodecError("Unable to decode TAP control response dispatcher envelope")
 
     if app is None or len(app) == 0:
         return dispatcher, None
