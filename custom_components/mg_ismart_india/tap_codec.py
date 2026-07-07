@@ -158,6 +158,34 @@ def encode_pin_verification_request(
     return f"{len(payload) * 2 + 5:04X}1" + payload.hex().upper()
 
 
+def _decode_v21_response(raw: str) -> tuple[dict[str, Any], bytes | None]:
+    if len(raw) < 5 or raw[0] != "1":
+        raise TapCodecError("Unexpected TAP v2.1 response framing")
+    try:
+        payload = bytes.fromhex(raw[5:])
+    except ValueError as err:
+        raise TapCodecError("TAP v2.1 response is not hexadecimal") from err
+    if len(payload) < 19:
+        raise TapCodecError("TAP v2.1 response is too short")
+
+    dispatcher_length = payload[1]
+    dispatcher_end = TAP_RESERVED_SIZE + dispatcher_length
+    if dispatcher_length < 3 or dispatcher_end > len(payload):
+        raise TapCodecError("Invalid TAP v2.1 dispatcher length")
+    try:
+        dispatcher = _codec().decode("MPDispatcherBody", payload[19:dispatcher_end])
+    except Exception as err:
+        raise TapCodecError("Unable to decode TAP v2.1 dispatcher") from err
+
+    app_length = dispatcher.get("applicationDataLength", 0)
+    if not app_length:
+        return dispatcher, None
+    app = payload[dispatcher_end : dispatcher_end + app_length]
+    if len(app) != app_length:
+        raise TapCodecError("Truncated TAP v2.1 application data")
+    return dispatcher, app
+
+
 def decode_status_response(raw: str) -> tuple[dict[str, Any], dict[str, Any] | None]:
     """Decode the dispatcher and optional vehicle status application data."""
 
