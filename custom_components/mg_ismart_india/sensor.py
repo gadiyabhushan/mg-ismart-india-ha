@@ -219,6 +219,15 @@ async def async_setup_entry(
                 lambda data: status_value(data, "longitude"),
                 entity_category=EntityCategory.DIAGNOSTIC
             ),
+            MgIndiaSensor(
+                coordinator,
+                "current_journey_distance",
+                "Current Journey Distance",
+                lambda data: status_value(data, "current_journey_distance"),
+                device_class=SensorDeviceClass.DISTANCE,
+                native_unit_of_measurement=UnitOfLength.KILOMETERS,
+                state_class=SensorStateClass.MEASUREMENT,
+            ),
         ]
     )
 

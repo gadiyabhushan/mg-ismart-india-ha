@@ -104,6 +104,7 @@ class MgIndiaVehicleStatus:
     side_lights: bool | None = None
     dipped_beam: bool | None = None
     main_beam: bool | None = None
+    current_journey_distance: float | None = None
 
 
 @dataclass(frozen=True)
@@ -716,6 +717,7 @@ def parse_vehicle_status(raw: dict[str, Any]) -> MgIndiaVehicleStatus:
         side_lights=optional_bool(basic.get("sideLightStatus")),
         dipped_beam=optional_bool(basic.get("dippedBeamStatus")),
         main_beam=optional_bool(basic.get("mainBeamStatus")),
+        current_journey_distance=tenths(basic.get("currentJourneyDistance")),
     )
 
 
