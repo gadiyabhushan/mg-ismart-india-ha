@@ -669,7 +669,7 @@ def parse_vehicle_status(raw: dict[str, Any]) -> MgIndiaVehicleStatus:
 
     def tyre_pressure(val: Any) -> float | None:
         if isinstance(val, int) and not isinstance(val, bool) and val > 0:
-            return round(val * 0.02, 2)
+            return round(val / 10.0, 1)
         return None
 
     return MgIndiaVehicleStatus(

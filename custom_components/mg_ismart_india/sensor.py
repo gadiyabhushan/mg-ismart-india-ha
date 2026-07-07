@@ -164,7 +164,7 @@ async def async_setup_entry(
                 "Tyre Pressure Front Left",
                 lambda data: status_value(data, "front_left_tyre_pressure_bar"),
                 device_class=SensorDeviceClass.PRESSURE,
-                native_unit_of_measurement=UnitOfPressure.BAR,
+                native_unit_of_measurement=UnitOfPressure.PSI,
                 state_class=SensorStateClass.MEASUREMENT,
             ),
             MgIndiaSensor(
@@ -173,7 +173,7 @@ async def async_setup_entry(
                 "Tyre Pressure Front Right",
                 lambda data: status_value(data, "front_right_tyre_pressure_bar"),
                 device_class=SensorDeviceClass.PRESSURE,
-                native_unit_of_measurement=UnitOfPressure.BAR,
+                native_unit_of_measurement=UnitOfPressure.PSI,
                 state_class=SensorStateClass.MEASUREMENT,
             ),
             MgIndiaSensor(
@@ -182,7 +182,7 @@ async def async_setup_entry(
                 "Tyre Pressure Rear Left",
                 lambda data: status_value(data, "rear_left_tyre_pressure_bar"),
                 device_class=SensorDeviceClass.PRESSURE,
-                native_unit_of_measurement=UnitOfPressure.BAR,
+                native_unit_of_measurement=UnitOfPressure.PSI,
                 state_class=SensorStateClass.MEASUREMENT,
             ),
             MgIndiaSensor(
@@ -191,7 +191,7 @@ async def async_setup_entry(
                 "Tyre Pressure Rear Right",
                 lambda data: status_value(data, "rear_right_tyre_pressure_bar"),
                 device_class=SensorDeviceClass.PRESSURE,
-                native_unit_of_measurement=UnitOfPressure.BAR,
+                native_unit_of_measurement=UnitOfPressure.PSI,
                 state_class=SensorStateClass.MEASUREMENT,
             ),
             MgIndiaSensor(

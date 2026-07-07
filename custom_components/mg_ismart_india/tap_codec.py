@@ -174,42 +174,53 @@ def decode_status_response(raw: str) -> tuple[dict[str, Any], dict[str, Any] | N
 def decode_control_response(raw: str) -> tuple[dict[str, Any], dict[str, Any] | None]:
     """Decode a dispatcher and optional remote control result."""
 
-    dispatcher, app = _decode_v21_response(raw)
-    if app is None:
-        return dispatcher, None
-    try:
-        control = _codec().decode("OTARVCStatus513", app)
-    except Exception as err:
-        raise TapCodecError("Unable to decode TAP control result") from err
-    return dispatcher, control
-
-
-def _decode_v21_response(raw: str) -> tuple[dict[str, Any], bytes | None]:
     if len(raw) < 5 or raw[0] != "1":
-        raise TapCodecError("Unexpected TAP v2.1 response framing")
+        raise TapCodecError("Unexpected TAP control response framing")
     try:
         payload = bytes.fromhex(raw[5:])
     except ValueError as err:
-        raise TapCodecError("TAP v2.1 response is not hexadecimal") from err
-    if len(payload) < 19:
-        raise TapCodecError("TAP v2.1 response is too short")
+        raise TapCodecError("TAP control response is not hexadecimal") from err
+    if len(payload) < 4:
+        raise TapCodecError("TAP control response is too short")
 
-    dispatcher_length = payload[1]
-    dispatcher_end = TAP_RESERVED_SIZE + dispatcher_length
-    if dispatcher_length < 3 or dispatcher_end > len(payload):
-        raise TapCodecError("Invalid TAP v2.1 dispatcher length")
-    try:
-        dispatcher = _codec().decode("MPDispatcherBody", payload[19:dispatcher_end])
-    except Exception as err:
-        raise TapCodecError("Unable to decode TAP v2.1 dispatcher") from err
+    version = payload[0]
+    dispatcher = None
+    app = None
 
-    app_length = dispatcher.get("applicationDataLength", 0)
-    if not app_length:
+    if version == V11_PROTOCOL_VERSION:
+        dispatcher_length = payload[2]
+        if dispatcher_length < 4 or dispatcher_length > len(payload):
+            raise TapCodecError(f"Invalid TAP v1.1 control dispatcher length: {dispatcher_length}")
+        try:
+            dispatcher = _codec_v11().decode("MPDispatcherBodyV11", payload[4:dispatcher_length])
+        except Exception as err:
+            raise TapCodecError(f"Unable to decode TAP v1.1 dispatcher: {err}") from err
+
+        app_length = dispatcher.get("applicationDataLength", 0)
+        if app_length > 0:
+            app = payload[dispatcher_length : dispatcher_length + app_length]
+    else:
+        dispatcher_length = payload[1]
+        dispatcher_end = TAP_RESERVED_SIZE + dispatcher_length
+        if dispatcher_length < 3 or dispatcher_end > len(payload):
+            raise TapCodecError(f"Invalid TAP v2.1 dispatcher length: {dispatcher_length}")
+        try:
+            dispatcher = _codec().decode("MPDispatcherBody", payload[19:dispatcher_end])
+        except Exception as err:
+            raise TapCodecError(f"Unable to decode TAP v2.1 dispatcher: {err}") from err
+
+        app_length = dispatcher.get("applicationDataLength", 0)
+        if app_length > 0:
+            app = payload[dispatcher_end : dispatcher_end + app_length]
+
+    if app is None or len(app) == 0:
         return dispatcher, None
-    app = payload[dispatcher_end : dispatcher_end + app_length]
-    if len(app) != app_length:
-        raise TapCodecError("Truncated TAP v2.1 application data")
-    return dispatcher, app
+
+    try:
+        control = _codec().decode("OTARVCStatus513", app)
+    except Exception as err:
+        raise TapCodecError(f"Unable to decode TAP control result: {err}") from err
+    return dispatcher, control
 
 
 def decode_pin_verification_response(raw: str) -> dict[str, Any]:
