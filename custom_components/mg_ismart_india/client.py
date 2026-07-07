@@ -100,6 +100,10 @@ class MgIndiaVehicleStatus:
     front_right_tyre_pressure_bar: float | None = None
     rear_left_tyre_pressure_bar: float | None = None
     rear_right_tyre_pressure_bar: float | None = None
+    hand_brake: bool | None = None
+    side_lights: bool | None = None
+    dipped_beam: bool | None = None
+    main_beam: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -708,6 +712,10 @@ def parse_vehicle_status(raw: dict[str, Any]) -> MgIndiaVehicleStatus:
         front_right_tyre_pressure_bar=tyre_pressure(basic.get("frontRrightTyrePressure")),
         rear_left_tyre_pressure_bar=tyre_pressure(basic.get("rearLeftTyrePressure")),
         rear_right_tyre_pressure_bar=tyre_pressure(basic.get("rearRightTyrePressure")),
+        hand_brake=optional_bool(basic.get("handBrake")),
+        side_lights=optional_bool(basic.get("sideLightStatus")),
+        dipped_beam=optional_bool(basic.get("dippedBeamStatus")),
+        main_beam=optional_bool(basic.get("mainBeamStatus")),
     )
 
 

@@ -144,6 +144,33 @@ async def async_setup_entry(
                 lambda data: status_value(data, "plugged_in"),
                 device_class=BinarySensorDeviceClass.PLUG,
             ),
+            MgIndiaBinarySensor(
+                coordinator,
+                "hand_brake",
+                "Hand Brake",
+                lambda data: status_value(data, "hand_brake"),
+            ),
+            MgIndiaBinarySensor(
+                coordinator,
+                "side_lights",
+                "Side Lights",
+                lambda data: status_value(data, "side_lights"),
+                device_class=BinarySensorDeviceClass.LIGHT,
+            ),
+            MgIndiaBinarySensor(
+                coordinator,
+                "dipped_beam",
+                "Dipped Beam",
+                lambda data: status_value(data, "dipped_beam"),
+                device_class=BinarySensorDeviceClass.LIGHT,
+            ),
+            MgIndiaBinarySensor(
+                coordinator,
+                "main_beam",
+                "Main Beam",
+                lambda data: status_value(data, "main_beam"),
+                device_class=BinarySensorDeviceClass.LIGHT,
+            ),
         ]
     )
 
