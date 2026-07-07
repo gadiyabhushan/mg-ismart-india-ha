@@ -229,17 +229,25 @@ def decode_control_response(raw: str) -> tuple[dict[str, Any], dict[str, Any] | 
             app = payload[dispatcher_length : dispatcher_length + app_length]
     else:
         dispatcher_length = payload[1]
+        # Try offset 19 (expecting 16 reserved bytes)
         dispatcher_end = TAP_RESERVED_SIZE + dispatcher_length
-        if dispatcher_length < 3 or dispatcher_end > len(payload):
-            raise TapCodecError(f"Invalid TAP v2.1 dispatcher length: {dispatcher_length}")
         try:
+            if dispatcher_length < 3 or dispatcher_end > len(payload):
+                raise ValueError("Length mismatch")
             dispatcher = _codec().decode("MPDispatcherBody", payload[19:dispatcher_end])
-        except Exception as err:
-            raise TapCodecError(f"Unable to decode TAP v2.1 dispatcher: {err}") from err
-
-        app_length = dispatcher.get("applicationDataLength", 0)
-        if app_length > 0:
+            app_length = dispatcher.get("applicationDataLength", 0)
             app = payload[dispatcher_end : dispatcher_end + app_length]
+        except Exception:
+            # Fallback to offset 3 (no reserved bytes)
+            dispatcher_end = 3 + dispatcher_length
+            if dispatcher_length < 3 or dispatcher_end > len(payload):
+                raise TapCodecError(f"Invalid TAP v2.1 dispatcher length: {dispatcher_length}")
+            try:
+                dispatcher = _codec().decode("MPDispatcherBody", payload[3:dispatcher_end])
+                app_length = dispatcher.get("applicationDataLength", 0)
+                app = payload[dispatcher_end : dispatcher_end + app_length]
+            except Exception as err:
+                raise TapCodecError(f"Unable to decode TAP v2.1 dispatcher: {err}") from err
 
     if app is None or len(app) == 0:
         return dispatcher, None

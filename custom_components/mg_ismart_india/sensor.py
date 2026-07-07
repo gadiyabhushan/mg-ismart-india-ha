@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
+    EntityCategory,
     PERCENTAGE,
     UnitOfElectricPotential,
     UnitOfLength,
@@ -53,19 +54,23 @@ async def async_setup_entry(
             km_per_pct_sensor,
             real_range_sensor,
             MgIndiaSensor(
-                coordinator, "model", "Model", lambda data: data.vehicle.model_name
+                coordinator, "model", "Model", lambda data: data.vehicle.model_name,
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
-                coordinator, "series", "Series", lambda data: data.vehicle.series
+                coordinator, "series", "Series", lambda data: data.vehicle.series,
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
                 coordinator,
                 "model_year",
                 "Model Year",
                 lambda data: data.vehicle.model_year,
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
-                coordinator, "platform", "Platform", lambda data: data.platform
+                coordinator, "platform", "Platform", lambda data: data.platform,
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
                 coordinator,
@@ -74,6 +79,7 @@ async def async_setup_entry(
                 lambda data: sum(
                     1 for item in data.features if item.get("isSupported")
                 ),
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
                 coordinator,
@@ -81,6 +87,7 @@ async def async_setup_entry(
                 "Last Update",
                 lambda data: datetime.fromtimestamp(data.last_update).astimezone(),
                 device_class=SensorDeviceClass.TIMESTAMP,
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
                 coordinator,
@@ -89,6 +96,7 @@ async def async_setup_entry(
                 lambda data: nested_value(data.co2_info, "data", "totalMileage"),
                 device_class=SensorDeviceClass.DISTANCE,
                 native_unit_of_measurement=UnitOfLength.KILOMETERS,
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
                 coordinator,
@@ -125,6 +133,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.VOLTAGE,
                 native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
                 coordinator,
@@ -150,6 +159,7 @@ async def async_setup_entry(
                 "Vehicle Status Time",
                 lambda data: status_datetime(data, "status_time"),
                 device_class=SensorDeviceClass.TIMESTAMP,
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
                 coordinator,
@@ -157,6 +167,7 @@ async def async_setup_entry(
                 "Last Vehicle Activity",
                 lambda data: status_datetime(data, "last_vehicle_activity"),
                 device_class=SensorDeviceClass.TIMESTAMP,
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
                 coordinator,
@@ -199,12 +210,14 @@ async def async_setup_entry(
                 "latitude",
                 "Latitude",
                 lambda data: status_value(data, "latitude"),
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
             MgIndiaSensor(
                 coordinator,
                 "longitude",
                 "Longitude",
                 lambda data: status_value(data, "longitude"),
+                entity_category=EntityCategory.DIAGNOSTIC
             ),
         ]
     )
@@ -223,12 +236,14 @@ class MgIndiaSensor(MgIndiaEntity, SensorEntity):
         device_class: SensorDeviceClass | None = None,
         native_unit_of_measurement: str | None = None,
         state_class: SensorStateClass | None = None,
+        entity_category: EntityCategory | None = None,
     ) -> None:
         super().__init__(coordinator, key, name)
         self._value_fn = value_fn
         self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = native_unit_of_measurement
         self._attr_state_class = state_class
+        self._attr_entity_category = entity_category
 
     @property
     def native_value(self) -> Any:
