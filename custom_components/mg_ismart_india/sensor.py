@@ -228,6 +228,27 @@ async def async_setup_entry(
                 native_unit_of_measurement=UnitOfLength.KILOMETERS,
                 state_class=SensorStateClass.MEASUREMENT,
             ),
+            MgIndiaSensor(
+                coordinator,
+                "engine_status",
+                "Engine Status (Raw)",
+                lambda data: status_value(data, "engine_status"),
+                entity_category=EntityCategory.DIAGNOSTIC
+            ),
+            MgIndiaSensor(
+                coordinator,
+                "power_mode",
+                "Power Mode (Raw)",
+                lambda data: status_value(data, "power_mode"),
+                entity_category=EntityCategory.DIAGNOSTIC
+            ),
+            MgIndiaSensor(
+                coordinator,
+                "vehicle_alarm_status",
+                "Vehicle Alarm Status (Raw)",
+                lambda data: status_value(data, "vehicle_alarm_status"),
+                entity_category=EntityCategory.DIAGNOSTIC
+            ),
         ]
     )
 
