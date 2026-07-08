@@ -249,6 +249,20 @@ async def async_setup_entry(
                 lambda data: status_value(data, "vehicle_alarm_status"),
                 entity_category=EntityCategory.DIAGNOSTIC
             ),
+            MgIndiaSensor(
+                coordinator,
+                "extended_data_1",
+                "Extended Data 1 (Raw)",
+                lambda data: status_value(data, "extended_data_1"),
+                entity_category=EntityCategory.DIAGNOSTIC
+            ),
+            MgIndiaSensor(
+                coordinator,
+                "extended_data_2",
+                "Extended Data 2 (Raw)",
+                lambda data: status_value(data, "extended_data_2"),
+                entity_category=EntityCategory.DIAGNOSTIC
+            ),
         ]
     )
 

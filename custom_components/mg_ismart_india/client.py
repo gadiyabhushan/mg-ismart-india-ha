@@ -108,6 +108,8 @@ class MgIndiaVehicleStatus:
     engine_status: int | None = None
     power_mode: int | None = None
     vehicle_alarm_status: int | None = None
+    extended_data_1: int | None = None
+    extended_data_2: int | None = None
 
 
 @dataclass(frozen=True)
@@ -724,6 +726,8 @@ def parse_vehicle_status(raw: dict[str, Any]) -> MgIndiaVehicleStatus:
         engine_status=basic.get("engineStatus"),
         power_mode=basic.get("powerMode"),
         vehicle_alarm_status=basic.get("vehicleAlarmStatus"),
+        extended_data_1=basic.get("extendedData1"),
+        extended_data_2=basic.get("extendedData2"),
     )
 
 
