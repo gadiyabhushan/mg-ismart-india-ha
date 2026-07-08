@@ -709,13 +709,12 @@ def parse_vehicle_status(raw: dict[str, Any]) -> MgIndiaVehicleStatus:
         can_bus_active=optional_bool(basic.get("canBusActive")),
         charging=(
             (basic.get("engineStatus") == 3)
-            or (bool(basic.get("extendedData2") and (int(basic.get("extendedData2")) & 0x40000000)))
+            or (basic.get("extendedData2") is not None and (int(basic.get("extendedData2")) & 0x40000000) == 0)
         ) if (basic.get("engineStatus") is not None or basic.get("extendedData2") is not None) else None,
         plugged_in=(
             (basic.get("engineStatus") in (3, 4))
-            or (bool(basic.get("extendedData1") and (int(basic.get("extendedData1")) & 0x40000000)))
-            or (bool(basic.get("extendedData2") and (int(basic.get("extendedData2")) & 0x40000000)))
-        ) if (basic.get("engineStatus") is not None or basic.get("extendedData1") is not None) else None,
+            or (basic.get("extendedData2") is not None and (int(basic.get("extendedData2")) & 0x40000000) == 0)
+        ) if (basic.get("engineStatus") is not None or basic.get("extendedData2") is not None) else None,
         latitude=latitude,
         longitude=longitude,
         altitude=altitude,
