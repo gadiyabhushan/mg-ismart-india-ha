@@ -27,6 +27,9 @@ class MgIndiaDataUpdateCoordinator(DataUpdateCoordinator[MgIndiaSnapshot]):
         if snapshot.status is not None and snapshot.status.can_bus_active:
             self.update_interval = timedelta(minutes=1)
             LOGGER.debug("MG Windsor EV is active. Setting update interval to 1 minute.")
+        elif snapshot.status is not None and snapshot.status.charging:
+            self.update_interval = timedelta(minutes=5)
+            LOGGER.debug("MG Windsor EV is charging. Setting update interval to 5 minutes.")
         else:
             self.update_interval = UPDATE_INTERVAL
             LOGGER.debug("MG Windsor EV is parked. Setting update interval to 15 minutes.")
